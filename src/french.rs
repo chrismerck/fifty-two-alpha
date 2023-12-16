@@ -1,10 +1,10 @@
 use std::fmt;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Suit {
+    Hearts,
     Clubs,
     Diamonds,
-    Hearts,
     Spades,
 }
 
@@ -19,7 +19,7 @@ impl fmt::Display for Suit {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Number {
     Ace,
     Two,
@@ -100,10 +100,14 @@ impl Deck {
   pub fn deal(&mut self) -> Option<Card> {
     self.cards.pop()
   }
+
+  pub fn len(&self) -> usize {
+    self.cards.len()
+  }
 }
 
 pub struct Hand {
-  cards: Vec<Card>,
+  pub cards: Vec<Card>,
 }
 
 impl Hand {
@@ -115,6 +119,16 @@ impl Hand {
 
   pub fn add(&mut self, card: Card) {
     self.cards.push(card);
+  }
+
+  pub fn sort(&mut self) {
+    self.cards.sort_by(|a, b| {
+      if a.suit == b.suit {
+        a.number.cmp(&b.number)
+      } else {
+        a.suit.cmp(&b.suit)
+      }
+    });
   }
 }
 
