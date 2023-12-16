@@ -60,8 +60,7 @@ impl Game {
         }
     }
 
-    /// play a single turn
-    fn play(&mut self) {
+    fn round(&mut self) -> bool {
         self.hands[self.turn].sort();
         println!("Player {}'s turn", self.turn + 1);
         println!("  Deck Size: {}", self.deck.len());
@@ -75,8 +74,8 @@ impl Game {
             DrawAction::DrawFromDiscard => self.pack.pop().unwrap(),
         };
         match draw_action {
-                DrawAction::DrawFromDeck => println!("  You draw a {} from the deck.", card),
-                DrawAction::DrawFromDiscard => println!("  You pick up the {} from the discard pile.", card),
+            DrawAction::DrawFromDeck => println!("  You draw a {} from the deck.", card),
+            DrawAction::DrawFromDiscard => println!("  You pick up the {} from the discard pile.", card),
         };
         self.hands[self.turn].add(card);
         let discard_index = discard(self, &self.hands[self.turn]);
@@ -84,7 +83,28 @@ impl Game {
         println!("  You discard the {}.", card);
         println!("");
         self.pack.push(card);
+        if self.deck.len() == 0 {
+            return false;
+        }
         self.turn = (self.turn + 1) % self.strategies.len();
+        true
+    }
+
+    fn play(&mut self) -> Vec<usize> {
+        while self.round() {}
+        self.score()
+    }
+
+    fn score(&self) -> Vec<usize> {
+        let mut scores = Vec::new();
+        for hand in &self.hands {
+            let mut score = 0;
+            for card in &hand.cards {
+                score += card.value(false);
+            }
+            scores.push(score);
+        }
+        scores
     }
 }
 
@@ -101,8 +121,5 @@ const MY_STRATEGY: Strategy = (my_draw_strategy, my_discard_strategy);
 fn main() {
     let mut game = Game::new(vec![MY_STRATEGY, MY_STRATEGY]);
     let hand = &game.hands[0];
-    game.play();
-    game.play();
-    game.play();
-    game.play();
+    println!("{:?}", game.play());
 }

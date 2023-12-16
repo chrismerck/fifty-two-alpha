@@ -67,6 +67,16 @@ impl Card {
       number,
     }
   }
+
+  pub fn value(&self, ace_high: bool) -> usize {
+    match self.number {
+      Number::Ace => if ace_high { 15 } else { 5 },
+      Number::Jack => 10,
+      Number::Queen => 10,
+      Number::King => 10,
+      _ => 5,
+    }
+  }
 }
 
 impl fmt::Display for Card {
