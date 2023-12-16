@@ -49,10 +49,10 @@ impl Meld {
 
 /// Strategy for drawing, making melds, and discarding.
 type Strategy = (
-    fn(&Game, &Hand) -> DrawAction, 
-    fn(&Game, &Hand) -> (
-        Vec<Vec<usize>>,
-        usize,
+    fn(&Hand) -> DrawAction, 
+    fn(&mut Hand) -> (
+        Vec<Meld>,
+        Card
     ));
 
 struct Game {
@@ -104,7 +104,7 @@ impl Game {
         println!("  Your Hand: {}", self.hands[self.turn]);
         println!("  ---------");
         let (draw, play) = self.strategies[self.turn];
-        let draw_action = draw(self, &self.hands[self.turn]);
+        let draw_action = draw(&self.hands[self.turn]);
         let card = match draw_action {
             DrawAction::DrawFromDeck => self.deck.deal().unwrap(),
             DrawAction::DrawFromDiscard => self.pack.pop().unwrap(),
@@ -114,11 +114,10 @@ impl Game {
             DrawAction::DrawFromDiscard => println!("  You pick up the {} from the discard pile.", card),
         };
         self.hands[self.turn].add(card);
-        let (meld_indexes, discard_index) = play(self, &self.hands[self.turn]);
-        let card = self.hands[self.turn].cards.remove(discard_index);
-        println!("  You discard the {}.", card);
+        let (melds, discard) = play(&mut self.hands[self.turn]);
+        println!("  You discard the {}.", discard);
         println!("");
-        self.pack.push(card);
+        self.pack.push(discard);
         if self.deck.len() == 0 {
             return false;
         }
@@ -144,12 +143,12 @@ impl Game {
     }
 }
 
-fn my_draw_strategy(game: &Game, hand: &Hand) -> DrawAction {
+fn my_draw_strategy(hand: &Hand) -> DrawAction {
     DrawAction::DrawFromDeck
 }
 
-fn my_play_strategy(game: &Game, hand: &Hand) -> (Vec<Vec<usize>>, usize) {
-    (vec![], 0)
+fn my_play_strategy(hand: &mut Hand) -> (Vec<Meld>, Card) {
+    (Vec::new(), hand.cards.remove(0))
 }
 
 const MY_STRATEGY: Strategy = (my_draw_strategy, my_play_strategy);
