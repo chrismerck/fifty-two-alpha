@@ -47,8 +47,13 @@ impl Meld {
     }
 }
 
-/// Strategy for drawing and discarding.
-type Strategy = (fn(&Game, &Hand) -> DrawAction, fn(&Game, &Hand) -> usize);
+/// Strategy for drawing, making melds, and discarding.
+type Strategy = (
+    fn(&Game, &Hand) -> DrawAction, 
+    fn(&Game, &Hand) -> (
+        Vec<Vec<usize>>,
+        usize,
+    ));
 
 struct Game {
     deck: Deck,
@@ -98,7 +103,7 @@ impl Game {
         println!("  Pack: {}", self.pack.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "));
         println!("  Your Hand: {}", self.hands[self.turn]);
         println!("  ---------");
-        let (draw, discard) = self.strategies[self.turn];
+        let (draw, play) = self.strategies[self.turn];
         let draw_action = draw(self, &self.hands[self.turn]);
         let card = match draw_action {
             DrawAction::DrawFromDeck => self.deck.deal().unwrap(),
@@ -109,7 +114,7 @@ impl Game {
             DrawAction::DrawFromDiscard => println!("  You pick up the {} from the discard pile.", card),
         };
         self.hands[self.turn].add(card);
-        let discard_index = discard(self, &self.hands[self.turn]);
+        let (meld_indexes, discard_index) = play(self, &self.hands[self.turn]);
         let card = self.hands[self.turn].cards.remove(discard_index);
         println!("  You discard the {}.", card);
         println!("");
@@ -143,40 +148,14 @@ fn my_draw_strategy(game: &Game, hand: &Hand) -> DrawAction {
     DrawAction::DrawFromDeck
 }
 
-fn my_discard_strategy(game: &Game, hand: &Hand) -> usize {
-    0
+fn my_play_strategy(game: &Game, hand: &Hand) -> (Vec<Vec<usize>>, usize) {
+    (vec![], 0)
 }
 
-const MY_STRATEGY: Strategy = (my_draw_strategy, my_discard_strategy);
+const MY_STRATEGY: Strategy = (my_draw_strategy, my_play_strategy);
 
 fn main() {
     let mut game = Game::new(vec![MY_STRATEGY, MY_STRATEGY]);
     let hand = &game.hands[0];
     println!("{:?}", game.play());
-
-    println!("====================");
-
-    // let's test a few Melds to make sure they work
-    let mut cards : Vec<Card> = 
-        vec!["2C", "3C", "4C", "5C"].iter().map(|s| Card::from_string(s)).collect();
-    let meld = Meld::new(cards);
-    println!("{} is a valid meld", meld.cards.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "));
-
-    // let's list a few sets of cards and check if they are valid melds
-    let mut sets : Vec<Vec<Card>> = vec![
-        vec!["2C", "4C", "3C"],
-        vec!["AS", "3S", "2S"],
-        vec!["JD", "QD", "AD", "KD"],
-        vec!["6S", "4C", "5C"],
-        vec!["6S", "6C", "6H"],
-    ].iter().map(|v| v.iter().map(|s| Card::from_string(s)).collect()).collect();
-
-    for mut cards in sets {
-        // check if valid
-        println!("{} is {}",
-            cards.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "),
-            if Meld::is_valid(&mut cards) { "valid" } else { "invalid" }
-        );
-    }
-
 }
