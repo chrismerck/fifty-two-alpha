@@ -47,6 +47,12 @@ impl Meld {
     }
 }
 
+impl std::fmt::Display for Meld {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.cards.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "))
+    }
+}
+
 /// Strategy for drawing, making melds, and discarding.
 type Strategy = (
     fn(&Hand) -> DrawAction, 
@@ -102,6 +108,11 @@ impl Game {
         println!("  Deck Size: {}", self.deck.len());
         println!("  Pack: {}", self.pack.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "));
         println!("  Your Hand: {}", self.hands[self.turn]);
+        if self.melds[self.turn].len() > 0 {
+            println!("  Your Melds: {}", self.melds[self.turn].iter().map(|m| m.to_string()).collect::<Vec<String>>().join(" "));
+        } else {
+            println!("  You have no melds.");
+        }
         println!("  ---------");
         let (draw, play) = self.strategies[self.turn];
         let draw_action = draw(&self.hands[self.turn]);
@@ -115,6 +126,10 @@ impl Game {
         };
         self.hands[self.turn].add(card);
         let (melds, discard) = play(&mut self.hands[self.turn]);
+        for meld in melds {
+            println!("  You play a meld: {}", meld);
+            self.melds[self.turn].push(meld);
+        }
         println!("  You discard the {}.", discard);
         println!("");
         self.pack.push(discard);
@@ -141,6 +156,43 @@ impl Game {
         }
         scores
     }
+}
+
+fn find_meld(hand: &mut Hand) -> Option<Meld> {
+    // assume hand is sorted
+    // search for straights
+    let mut straight_start = 0;
+    let mut straight_end = 0;
+    for i in 0..hand.cards.len() {
+        if i == 0 { continue; }
+        if hand.cards[i].suit != hand.cards[i - 1].suit {
+            if straight_end - straight_start >= 2 {
+                let mut cards = Vec::new();
+                for j in straight_start..=straight_end {
+                    cards.push(hand.cards.remove(straight_start));
+                }
+                return Some(Meld::new(cards));
+            }
+            straight_start = i;
+            straight_end = i;
+            continue;
+        }
+        if hand.cards[i].number as usize == hand.cards[i - 1].number as usize + 1 {
+            straight_end = i;
+        } else {
+            if straight_end - straight_start >= 2 {
+                let mut cards = Vec::new();
+                for j in straight_start..=straight_end {
+                    cards.push(hand.cards.remove(straight_start));
+                }
+                return Some(Meld::new(cards));
+            }
+            straight_start = i;
+            straight_end = i;
+            continue;
+        }
+    }
+    None
 }
 
 fn my_draw_strategy(hand: &Hand) -> DrawAction {

@@ -70,7 +70,7 @@ impl Card {
 
   pub fn from_string(s: &str) -> Card {
     let mut chars = s.chars();
-    /// AH ... 10H ... KH AC ... KC AD ... KD AS ... KS
+    // AH ... 10H ... KH AC ... KC AD ... KD AS ... KS
     let number = match chars.next().unwrap() {
       'A' => Number::Ace,
       '2' => Number::Two,
