@@ -16,6 +16,37 @@ struct Meld {
     cards: Vec<Card>,
 }
 
+impl Meld {
+    fn new(mut cards: Vec<Card>) -> Meld {
+        if !Meld::is_valid(&mut cards) {
+            panic!("Invalid meld");
+        }
+        Meld {
+            cards,
+        }
+    }
+
+    pub fn is_valid(cards: &mut Vec<Card>) -> bool {
+        cards.sort_by(|a, b| a.number.cmp(&b.number));
+        if cards.len() < 3 {
+            return false;
+        }
+        let is_book = cards.iter().all(|c| c.number == cards[0].number);
+        let is_flush = cards.iter().all(|c| c.suit == cards[0].suit);
+        let is_straight_aces_low = cards.iter().skip(1).enumerate().all(|(i, c)| {
+            c.number as usize == cards[i].number as usize + 1
+        });
+        let is_straight_aces_high = cards.iter().skip(1).enumerate().all(|(i, c)| {
+            if cards[i].number == Number::King {
+                c.number == Number::Ace
+            } else {
+                c.number as usize == cards[i].number as usize + 1
+            }
+        });
+        is_book || is_flush && (is_straight_aces_low || is_straight_aces_high)
+    }
+}
+
 /// Strategy for drawing and discarding.
 type Strategy = (fn(&Game, &Hand) -> DrawAction, fn(&Game, &Hand) -> usize);
 
@@ -122,4 +153,30 @@ fn main() {
     let mut game = Game::new(vec![MY_STRATEGY, MY_STRATEGY]);
     let hand = &game.hands[0];
     println!("{:?}", game.play());
+
+    println!("====================");
+
+    // let's test a few Melds to make sure they work
+    let mut cards : Vec<Card> = 
+        vec!["2C", "3C", "4C", "5C"].iter().map(|s| Card::from_string(s)).collect();
+    let meld = Meld::new(cards);
+    println!("{} is a valid meld", meld.cards.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "));
+
+    // let's list a few sets of cards and check if they are valid melds
+    let mut sets : Vec<Vec<Card>> = vec![
+        vec!["2C", "4C", "3C"],
+        vec!["AS", "3S", "2S"],
+        vec!["JD", "QD", "AD", "KD"],
+        vec!["6S", "4C", "5C"],
+        vec!["6S", "6C", "6H"],
+    ].iter().map(|v| v.iter().map(|s| Card::from_string(s)).collect()).collect();
+
+    for mut cards in sets {
+        // check if valid
+        println!("{} is {}",
+            cards.iter().map(|c| c.to_string()).collect::<Vec<String>>().join(" "),
+            if Meld::is_valid(&mut cards) { "valid" } else { "invalid" }
+        );
+    }
+
 }

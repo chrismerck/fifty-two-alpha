@@ -56,12 +56,48 @@ impl fmt::Display for Number {
     }
 }
 pub struct Card {
-    suit: Suit,
-    number: Number,
+    pub suit: Suit,
+    pub number: Number,
 }
 
 impl Card {
   pub fn new(suit: Suit, number: Number) -> Card {
+    Card {
+      suit,
+      number,
+    }
+  }
+
+  pub fn from_string(s: &str) -> Card {
+    let mut chars = s.chars();
+    /// AH ... 10H ... KH AC ... KC AD ... KD AS ... KS
+    let number = match chars.next().unwrap() {
+      'A' => Number::Ace,
+      '2' => Number::Two,
+      '3' => Number::Three,
+      '4' => Number::Four,
+      '5' => Number::Five,
+      '6' => Number::Six,
+      '7' => Number::Seven,
+      '8' => Number::Eight,
+      '9' => Number::Nine,
+      '1' => Number::Ten,
+      'J' => Number::Jack,
+      'Q' => Number::Queen,
+      'K' => Number::King,
+      _ => panic!("Invalid card number: {}", s),
+    };
+    // remove 0 if present
+    if number == Number::Ten {
+      chars.next();
+    }
+    let suit = match chars.next().unwrap() {
+      'H' => Suit::Hearts,
+      'C' => Suit::Clubs,
+      'D' => Suit::Diamonds,
+      'S' => Suit::Spades,
+      _ => panic!("Invalid card suit: {}", s),
+    };
     Card {
       suit,
       number,
