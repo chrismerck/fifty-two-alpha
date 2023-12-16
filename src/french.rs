@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Copy, Clone)]
 pub enum Suit {
     Clubs,
     Diamonds,
@@ -18,6 +19,7 @@ impl fmt::Display for Suit {
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum Number {
     Ace,
     Two,
@@ -70,5 +72,57 @@ impl Card {
 impl fmt::Display for Card {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}{}", self.number, self.suit)
+    }
+}
+
+pub struct Deck {
+  cards: Vec<Card>,
+}
+
+impl Deck {
+  pub fn new() -> Deck {
+    let mut cards = Vec::new();
+    for suit in [Suit::Clubs, Suit::Diamonds, Suit::Hearts, Suit::Spades].iter() {
+      for number in [Number::Ace, Number::Two, Number::Three, Number::Four, Number::Five, Number::Six, Number::Seven, Number::Eight, Number::Nine, Number::Ten, Number::Jack, Number::Queen, Number::King].iter() {
+        cards.push(Card::new(*suit, *number));
+      }
+    }
+    Deck {
+      cards,
+    }
+  }
+
+  pub fn shuffle(&mut self) {
+    use rand::seq::SliceRandom;
+    self.cards.shuffle(&mut rand::thread_rng());
+  }
+
+  pub fn deal(&mut self) -> Option<Card> {
+    self.cards.pop()
+  }
+}
+
+pub struct Hand {
+  cards: Vec<Card>,
+}
+
+impl Hand {
+  pub fn new() -> Hand {
+    Hand {
+      cards: Vec::new(),
+    }
+  }
+
+  pub fn add(&mut self, card: Card) {
+    self.cards.push(card);
+  }
+}
+
+impl fmt::Display for Hand {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for card in self.cards.iter() {
+          write!(f, "{} ", card)?;
+        }
+        Ok(())
     }
 }
